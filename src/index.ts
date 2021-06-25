@@ -32,11 +32,17 @@ export class VuexPersistence<S> implements PersistOptions<S> {
    */
   public plugin: Plugin<S>
   /**
+   * The plugin function that can be to accepting more writes.
+   */
+  public prepareShutdown: () => Promise<void>
+  /**
    * A mutation that can be used to restore state
    * Helpful if we are running in strict mode
    */
   public RESTORE_MUTATION: Mutation<S>
   public subscribed: boolean
+
+  private shuttingDown: boolean
 
   // tslint:disable-next-line:variable-name
   private _mutex = new SimplePromiseQueue()
@@ -52,6 +58,7 @@ export class VuexPersistence<S> implements PersistOptions<S> {
     this.key = ((options.key != null) ? options.key : 'vuex')
 
     this.subscribed = false
+    this.shuttingDown = false
     this.supportCircular = options.supportCircular || false
     if (this.supportCircular) {
       FlattedJSON = require('flatted')
@@ -201,6 +208,11 @@ export class VuexPersistence<S> implements PersistOptions<S> {
           this.subscribed = true
         })
       }
+
+      this.prepareShutdown = () => {
+        this.shuttingDown = true;
+        return this._mutex.flushQueue();
+      }
     } else {
 
       /**
@@ -259,12 +271,17 @@ export class VuexPersistence<S> implements PersistOptions<S> {
         }
 
         this.subscriber(store)((mutation: MutationPayload, state: S) => {
-          if (this.filter(mutation)) {
+          if (!this.shuttingDown && this.filter(mutation)) {
             this.saveState(this.key, this.reducer(state), this.storage)
           }
         })
 
         this.subscribed = true
+      }
+
+      this.prepareShutdown = () => {
+        this.shuttingDown = true;
+        return Promise.resolve();
       }
     }
   }
