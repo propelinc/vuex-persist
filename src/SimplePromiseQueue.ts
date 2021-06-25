@@ -9,7 +9,7 @@ export default class SimplePromiseQueue {
     return Promise.resolve()
   }
 
-  private flushQueue() {
+  public flushQueue() {
     this._flushing = true
 
     const chain = (): Promise<void> | void => {

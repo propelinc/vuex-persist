@@ -1,6 +1,6 @@
 {
-  "name": "vuex-persist",
-  "version": "3.1.3",
+  "name": "@propelinc/vuex-persistence",
+  "version": "3.1.3-rc1",
   "description": "A Vuex persistence plugin in Typescript",
   "main": "dist/cjs/index.js",
   "module": "dist/esm/index.js",
@@ -15,7 +15,7 @@
   "types": "dist/types/index.d.ts",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/championswimmer/vuex-persist.git"
+    "url": "git+https://github.com/propelinc/vuex-persist.git"
   },
   "scripts": {
     "doc:clean": "rimraf docs",
@@ -49,9 +49,9 @@
   "author": "Arnav Gupta <championswimmer@gmail.com>",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/championswimmer/vuex-persist/issues"
+    "url": "https://github.com/propelinc/vuex-persist/issues"
   },
-  "homepage": "https://github.com/championswimmer/vuex-persist#readme",
+  "homepage": "https://github.com/propelinc/vuex-persist#readme",
   "devDependencies": {
     "@types/chai": "^4.1.4",
     "@types/lodash": "^4.6.4",
@@ -79,5 +79,9 @@
   },
   "peerDependencies": {
     "vuex": ">=2.5"
+  },
+  "directories": {
+    "doc": "docs",
+    "test": "test"
   }
 }
