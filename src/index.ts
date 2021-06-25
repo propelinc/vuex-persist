@@ -192,7 +192,7 @@ export class VuexPersistence<S> implements PersistOptions<S> {
             store.replaceState(merge(store.state, savedState || {}, this.mergeOption) as S)
           }
           this.subscriber(store)((mutation: MutationPayload, state: S) => {
-            if (this.filter(mutation)) {
+            if (!this.shuttingDown && this.filter(mutation)) {
               this._mutex.enqueue(
                 this.saveState(this.key, this.reducer(state), this.storage) as Promise<void>
               )
