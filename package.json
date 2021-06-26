@@ -1,6 +1,6 @@
 {
-  "name": "@propelinc/vuex-persistence",
-  "version": "3.1.3-rc2",
+  "name": "@propelinc/vuex-persist",
+  "version": "3.1.3-propel",
   "description": "A Vuex persistence plugin in Typescript",
   "main": "dist/cjs/index.js",
   "module": "dist/esm/index.js",
