@@ -20,7 +20,7 @@ class SaveWaiter {
 
 const KEY = 'key'
 const storage: Record<string, any> = {}
-const saveWaiters = [new SaveWaiter(), new SaveWaiter()]
+let saveWaiters: Array<SaveWaiter> = []
 let saveCount = 0
 const vuexPersist = new VuexPersistence({
   key: KEY,
@@ -56,16 +56,23 @@ const store = new Store<any>({
   plugins: [vuexPersist.plugin]
 })
 
+// Wait for other promises to settle
+async function settled() {
+  return new Promise((resolve) => { setTimeout(resolve) })
+}
+
 describe('Storage: Custom/Async; Test: queue order', () => {
+  beforeEach(() => {
+    saveWaiters = [new SaveWaiter(), new SaveWaiter()]
+    saveCount = 0
+  })
+
   it('should wait for the previous save to finish before saving', async () => {
     store.commit('dogBark')
     store.commit('catMew')
 
-    // Make the second saveWaiter ready first. This should do nothing, because the write sits in
-    // the queue behind the first write. The await here is needed to make the expect fail if
-    // saveState has already started execution by making the promise in saveState resolve.
     saveWaiters[1].resolveReady()
-    await saveWaiters[1].ready
+    await settled()
     expect(storage[KEY]).not.to.exist
 
     saveWaiters[0].resolveReady()
@@ -74,5 +81,25 @@ describe('Storage: Custom/Async; Test: queue order', () => {
 
     await saveWaiters[1].done
     expect(storage[KEY]).to.deep.equal({ dog: { barks: 1 }, cat: { mews: 1 }})
+  })
+
+  it('should let us join to wait for all saves to finish', async () => {
+    store.commit('dogBark')
+    store.commit('catMew')
+
+    let done = false
+    vuexPersist.flushWriteQueue().then(() => { done = true })
+
+    saveWaiters[0].resolveReady()
+    await saveWaiters[0].done
+    await settled()
+
+    expect(done).to.be.false
+
+    saveWaiters[1].resolveReady()
+    await saveWaiters[1].done
+    await settled()
+
+    expect(done).to.be.true
   })
 })
