@@ -34,7 +34,7 @@ export class VuexPersistence<S> implements PersistOptions<S> {
   /**
    * The plugin function that can be to accepting more writes.
    */
-  public prepareShutdown: () => Promise<void>
+  public flushWriteQueue: () => Promise<void>
   /**
    * A mutation that can be used to restore state
    * Helpful if we are running in strict mode
@@ -42,10 +42,8 @@ export class VuexPersistence<S> implements PersistOptions<S> {
   public RESTORE_MUTATION: Mutation<S>
   public subscribed: boolean
 
-  private shuttingDown: boolean
-
   // tslint:disable-next-line:variable-name
-  private _mutex = new SimplePromiseQueue()
+  private _writeQueue = new SimplePromiseQueue()
 
   /**
    * Create a {@link VuexPersistence} object.
@@ -58,7 +56,6 @@ export class VuexPersistence<S> implements PersistOptions<S> {
     this.key = ((options.key != null) ? options.key : 'vuex')
 
     this.subscribed = false
-    this.shuttingDown = false
     this.supportCircular = options.supportCircular || false
     if (this.supportCircular) {
       FlattedJSON = require('flatted')
@@ -192,12 +189,12 @@ export class VuexPersistence<S> implements PersistOptions<S> {
             store.replaceState(merge(store.state, savedState || {}, this.mergeOption) as S)
           }
           this.subscriber(store)((mutation: MutationPayload, state: S) => {
-            if (!this.shuttingDown && this.filter(mutation)) {
+            if (this.filter(mutation)) {
               // We clone the reduced state to snapshot it before enqueuing the save. Otherwise
               // the save may be modified before the save task runs and then the wrong state
               // is saved.
               const clonedState = merge({}, this.reducer(state), 'replaceArrays')
-              this._mutex.enqueue(
+              this._writeQueue.enqueue(
                 () => this.saveState(this.key, clonedState, this.storage) as Promise<void>
               )
             }
@@ -206,10 +203,7 @@ export class VuexPersistence<S> implements PersistOptions<S> {
         })
       }
 
-      this.prepareShutdown = () => {
-        this.shuttingDown = true;
-        return this._mutex.flushQueue();
-      }
+      this.flushWriteQueue = async () => await this._writeQueue.join()
     } else {
 
       /**
@@ -268,7 +262,7 @@ export class VuexPersistence<S> implements PersistOptions<S> {
         }
 
         this.subscriber(store)((mutation: MutationPayload, state: S) => {
-          if (!this.shuttingDown && this.filter(mutation)) {
+          if (this.filter(mutation)) {
             this.saveState(this.key, this.reducer(state), this.storage)
           }
         })
@@ -276,10 +270,7 @@ export class VuexPersistence<S> implements PersistOptions<S> {
         this.subscribed = true
       }
 
-      this.prepareShutdown = () => {
-        this.shuttingDown = true;
-        return Promise.resolve();
-      }
+      this.flushWriteQueue = async () => {}
     }
   }
 
