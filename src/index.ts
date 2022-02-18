@@ -88,11 +88,11 @@ export class VuexPersistence<S> implements PersistOptions<S> {
      * How this works is -
      *  1. If there is options.reducer function, we use that, if not;
      *  2. We check options.modules;
-     *    1a. If there is no options.modules array, we use entire state in reducer
-     *    1b. If writes are async, we clone the state so each saveState call in the queue has its
-     *        own caopy of the state.
-     *    2.  Otherwise, we create a reducer that merges all those state modules that are
-     *        defined in the options.modules[] array
+     *    1. If there is no options.modules array, we use entire state in reducer. For the async
+     *       storage case we clone the state so each saveState call in the save queue has its
+     *       own copy of the state.
+     *    2. Otherwise, we create a reducer that merges all those state modules that are
+     *       defined in the options.modules[] array
      * @type {((state: S) => {}) | ((state: S) => S) | ((state: any) => {})}
      */
     if (options.reducer != null) {
