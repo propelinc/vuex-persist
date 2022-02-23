@@ -88,26 +88,24 @@ export class VuexPersistence<S> implements PersistOptions<S> {
      * How this works is -
      *  1. If there is options.reducer function, we use that, if not;
      *  2. We check options.modules;
-     *    1. If there is no options.modules array, we use entire state in reducer. For the async
-     *       storage case we clone the state so each saveState call in the save queue has its
-     *       own copy of the state.
+     *    1. If there is no options.modules array, we use entire state in reducer
      *    2. Otherwise, we create a reducer that merges all those state modules that are
-     *       defined in the options.modules[] array
+     *        defined in the options.modules[] array
      * @type {((state: S) => {}) | ((state: S) => S) | ((state: any) => {})}
      */
-    if (options.reducer != null) {
-      this.reducer = options.reducer
-    } else if (options.modules == null) {
-      if (options.asyncStorage) {
-        this.reducer = (state: S) => merge({}, state, this.mergeOption)
-      } else {
-        this.reducer = (state: S) => state
-      }
-    } else {
-      this.reducer = (state: any) =>
-        (options!.modules as string[]).reduce((a, i) =>
-          merge(a, { [i]: state[i] }, this.mergeOption), {/* start empty accumulator*/ })
-    }
+    this.reducer = (
+      (options.reducer != null)
+        ? options.reducer
+        : (
+          (options.modules == null)
+            ? ((state: S) => state)
+            : (
+              (state: any) =>
+                (options!.modules as string[]).reduce((a, i) =>
+                  merge(a, { [i]: state[i] }, this.mergeOption), {/* start empty accumulator*/ })
+            )
+        )
+    )
 
     this.filter = options.filter || ((mutation) => true)
 
@@ -202,9 +200,12 @@ export class VuexPersistence<S> implements PersistOptions<S> {
           }
           this.subscriber(store)((mutation: MutationPayload, state: S) => {
             if (!this.shuttingDown && this.filter(mutation)) {
-              const reducedState = this.reducer(state)
+              // We clone the reduced state to snapshot it before enqueuing the save. Otherwise
+              // the save may be modified before the save task runs and then the wrong state
+              // is saved.
+              const clonedState = merge({}, this.reducer(state), 'replaceArrays')
               this._mutex.enqueue(
-                async () => await this.saveState(this.key, reducedState, this.storage)
+                () => this.saveState(this.key, clonedState, this.storage) as Promise<Void>
               )
             }
           })
