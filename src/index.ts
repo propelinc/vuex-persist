@@ -198,7 +198,7 @@ export class VuexPersistence<S> implements PersistOptions<S> {
               // is saved.
               const clonedState = merge({}, this.reducer(state), 'replaceArrays')
               this._mutex.enqueue(
-                () => this.saveState(this.key, clonedState, this.storage) as Promise<Void>
+                () => this.saveState(this.key, clonedState, this.storage) as Promise<void>
               )
             }
           })
