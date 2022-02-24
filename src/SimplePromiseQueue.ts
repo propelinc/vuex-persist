@@ -5,15 +5,16 @@ export default class SimplePromiseQueue {
 
   public enqueue(task: () => Promise<void>) {
     this._queue.push(task)
-    this.join()
+    this.flushQueue()
   }
 
-  public async join(): Promise<void> {
+  public async flushQueue(): Promise<void> {
     const runner = async () => {
       while (this._queue.length) {
         const nextTask = this._queue.shift()!
         await nextTask()
       }
+      this._runner = null
     }
 
     if (this._runner) {
@@ -21,6 +22,5 @@ export default class SimplePromiseQueue {
     }
     this._runner = runner()
     await this._runner
-    this._runner = null
   }
 }
