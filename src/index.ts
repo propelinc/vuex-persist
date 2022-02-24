@@ -210,7 +210,7 @@ export class VuexPersistence<S> implements PersistOptions<S> {
         })
       }
 
-      this.flushWriteQueue = async () => await this._writeQueue.join()
+      this.flushWriteQueue = async () => await this._writeQueue.flushQueue()
     } else {
 
       /**
