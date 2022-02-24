@@ -193,8 +193,12 @@ export class VuexPersistence<S> implements PersistOptions<S> {
           }
           this.subscriber(store)((mutation: MutationPayload, state: S) => {
             if (!this.shuttingDown && this.filter(mutation)) {
+              // We clone the reduced state to snapshot it before enqueuing the save. Otherwise
+              // the save may be modified before the save task runs and then the wrong state
+              // is saved.
+              const clonedState = merge({}, this.reducer(state), 'replaceArrays')
               this._mutex.enqueue(
-                this.saveState(this.key, this.reducer(state), this.storage) as Promise<void>
+                () => this.saveState(this.key, clonedState, this.storage) as Promise<void>
               )
             }
           })
