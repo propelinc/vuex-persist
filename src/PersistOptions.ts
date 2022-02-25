@@ -89,4 +89,13 @@ export interface PersistOptions<S> {
    * defaults to replacing arrays
    */
   mergeOption?: MergeOptionType
+
+  /**
+   * For async storage, if multiple calls to saveState are pending,
+   * only perform the last one. This can increase performance and
+   * is safe if saveState just writes the entire state to the store
+   * with no additional side effects.
+   * @default false
+   */
+  skipIntermediateSaves?: boolean
 }
