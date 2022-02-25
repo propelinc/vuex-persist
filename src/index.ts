@@ -5,7 +5,7 @@ import { Mutation, MutationPayload, Payload, Plugin, Store } from 'vuex'
 import { AsyncStorage } from './AsyncStorage'
 import { MockStorage } from './MockStorage'
 import { PersistOptions } from './PersistOptions'
-import SimplePromiseQueue from './SimplePromiseQueue'
+import { PromiseQueue, SimplePromiseQueue, SingleTaskPromiseQueue} from './PromiseQueue'
 import { merge, MergeOptionType } from './utils'
 
 let FlattedJSON = JSON
@@ -43,7 +43,7 @@ export class VuexPersistence<S> implements PersistOptions<S> {
   public subscribed: boolean
 
   // tslint:disable-next-line:variable-name
-  private _writeQueue = new SimplePromiseQueue()
+  private _writeQueue: PromiseQueue
 
   /**
    * Create a {@link VuexPersistence} object.
@@ -61,6 +61,10 @@ export class VuexPersistence<S> implements PersistOptions<S> {
       FlattedJSON = require('flatted')
     }
     this.mergeOption = options.mergeOption || 'replaceArrays'
+
+    this._writeQueue = options.skipIntermediateSaves
+      ? new SingleTaskPromiseQueue()
+      : new SimplePromiseQueue()
 
     let localStorageLitmus = true
 
