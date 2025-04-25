@@ -1,7 +1,7 @@
 /**
  * Created by championswimmer on 18/07/17.
  */
-import { Mutation, MutationPayload, Payload, Plugin, Store } from 'vuex'
+import { Mutation, MutationPayload, Plugin, Store } from 'vuex'
 import { AsyncStorage } from './AsyncStorage'
 import { MockStorage } from './MockStorage'
 import { PersistOptions } from './PersistOptions'
@@ -21,7 +21,7 @@ export class VuexPersistence<S> implements PersistOptions<S> {
   public saveState: (key: string, state: {}, storage?: AsyncStorage | Storage) => Promise<void> | void
   public reducer: (state: S) => Partial<S>
   public key: string
-  public filter: (mutation: Payload) => boolean
+  public filter: (mutation: MutationPayload) => boolean
   public modules: string[]
   public strictMode: boolean
   public supportCircular: boolean
@@ -112,10 +112,17 @@ export class VuexPersistence<S> implements PersistOptions<S> {
 
     this.strictMode = options.strictMode || false
 
+    const _this = this
     this.RESTORE_MUTATION = function RESTORE_MUTATION(state: S, savedState: any) {
-      const mergedState = merge(state, savedState || {}, this.mergeOption)
+      const mergedState = merge(state, savedState || {}, _this.mergeOption)
       for (const propertyName of Object.keys(mergedState as {})) {
-        (this as any)._vm.$set(state, propertyName, (mergedState as any)[propertyName])
+        // Maintain support for vue 2
+        if ((this as any)._vm !== undefined && (this as any)._vm.$set !== undefined) {
+          (this as any)._vm.$set(state, propertyName, (mergedState as any)[propertyName])
+          continue
+        }
+
+        (state as any)[propertyName] = (mergedState as any)[propertyName]
       }
     }
 

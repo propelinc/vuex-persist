@@ -126,9 +126,7 @@ So we'll register it as a ssr-free plugin.
 ```js
 // Inside - nuxt.config.js
 export default {
-  plugins: [
-    { src: '~/plugins/vuex-persist', ssr: false }
-  ]
+   plugins: [{ src: '~/plugins/vuex-persist.js', mode: 'client' }],
 }
 ```
 
@@ -184,12 +182,12 @@ const store = new Vuex.Store<State>({
 (or in Javascript)
 
 ```js
-const store = {
+const store = new Vuex.Store({
   state: { ... },
   mutations: { ... },
   actions: { ... },
   plugins: [vuexLocal.plugin]
-}
+})
 ```
 
 ### Constructor Parameters -
@@ -207,7 +205,7 @@ Here are the properties, and what they mean -
 | reducer         | function<br> (state) => object         | State reducer. reduces state to only those values you want to save. <br>By default, saves entire state                                                                               |
 | filter          | function<br> (mutation) => boolean     | Mutation filter. Look at `mutation.type` and return true <br>for only those ones which you want a persistence write to be triggered for. <br> Default returns true for all mutations |
 | modules         | string[]                               | List of modules you want to persist. (Do not write your own reducer if you want to use this)                                                                                         |
-| asyncStorage    | boolean                                | Denotes if the store uses Promises (like localforage) or not (you must set this to true when suing something like localforage) <br>_**Default: false**_                                                                                                |
+| asyncStorage    | boolean                                | Denotes if the store uses Promises (like localforage) or not (you must set this to true when using something like localforage) <br>_**Default: false**_                                                                                                |
 | supportCircular | boolean                                | Denotes if the state has any circular references to itself (state.x === state) <br>_**Default: false**_                                                                                                       |
 
 ### Usage Notes
