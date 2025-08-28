@@ -28,5 +28,6 @@ const defaultMergeOptions: deepmerge.Options = {
 }
 
 export function merge<I, F>(into: Partial<I>, from: Partial<F>, mergeOption: MergeOptionType): I & F & {} {
+  // @ts-ignore
   return deepmerge(into, deepToRaw(from), options[mergeOption])
 }
