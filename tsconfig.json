@@ -1,10 +1,10 @@
 {
   "compilerOptions": {
-    "module": "es2015",
+    "module": "esnext",
     "moduleResolution": "node",
-    "target": "es2015",
+    "target": "es2020",
     "lib": [
-      "es2015",
+      "es2020",
       "dom"
     ],
     "sourceMap": true,
