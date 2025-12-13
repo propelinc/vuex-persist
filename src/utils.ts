@@ -4,13 +4,18 @@ import { toRaw } from 'vue'
 export type MergeOptionType = 'replaceArrays' | 'concatArrays'
 
 function deepToRaw(value: any): any {
-  if (Array.isArray(value)) {
-    return toRaw(value).map(deepToRaw);
+  if (value === null || typeof value !== 'object') {
+    return value;
   }
-  if (typeof value === 'object' && value !== null) {
-    return Object.fromEntries(Object.entries(value).map(([key, value]) => ([key, deepToRaw(value)])))
+  const raw = toRaw(value);
+  // NOTE(ram): Preserve special object types that localForage can serialize.
+  if (raw instanceof Date || raw instanceof Blob || raw instanceof ArrayBuffer) {
+    return raw;
   }
-  return value;
+  if (Array.isArray(raw)) {
+    return raw.map(deepToRaw);
+  }
+  return Object.fromEntries(Object.entries(raw).map(([k, v]) => [k, deepToRaw(v)]));
 }
 
 const options: {[k in MergeOptionType]: deepmerge.Options} = {
