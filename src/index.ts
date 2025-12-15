@@ -6,7 +6,7 @@ import { AsyncStorage } from './AsyncStorage'
 import { MockStorage } from './MockStorage'
 import { PersistOptions } from './PersistOptions'
 import { PromiseQueue, SimplePromiseQueue, SingleTaskPromiseQueue} from './PromiseQueue'
-import { merge, MergeOptionType } from './utils'
+import { deepToRaw, merge, MergeOptionType } from './utils'
 
 let FlattedJSON = JSON
 
@@ -114,7 +114,7 @@ export class VuexPersistence<S> implements PersistOptions<S> {
 
     const _this = this
     this.RESTORE_MUTATION = function RESTORE_MUTATION(state: S, savedState: any) {
-      const mergedState = merge(state, savedState || {}, _this.mergeOption)
+      const mergedState = merge<S, S>(state, savedState || {}, _this.mergeOption)
       for (const propertyName of Object.keys(mergedState as {})) {
         // Maintain support for vue 2
         if ((this as any)._vm !== undefined && (this as any)._vm.$set !== undefined) {
@@ -197,14 +197,14 @@ export class VuexPersistence<S> implements PersistOptions<S> {
           if (this.strictMode) {
             store.commit('RESTORE_MUTATION', savedState)
           } else {
-            store.replaceState(merge(store.state, savedState || {}, this.mergeOption) as S)
+            store.replaceState(merge<S, S>(store.state, savedState || {}, this.mergeOption) as S)
           }
           this.subscriber(store)((mutation: MutationPayload, state: S) => {
             if (this.filter(mutation)) {
               // We clone the reduced state to snapshot it before enqueuing the save. Otherwise
               // the save may be modified before the save task runs and then the wrong state
               // is saved.
-              const clonedState = merge({}, this.reducer(state), 'replaceArrays')
+              const clonedState = deepToRaw(this.reducer(state));
               this._writeQueue.enqueue(
                 () => this.saveState(this.key, clonedState, this.storage) as Promise<void>
               )
@@ -269,12 +269,13 @@ export class VuexPersistence<S> implements PersistOptions<S> {
         if (this.strictMode) {
           store.commit('RESTORE_MUTATION', savedState)
         } else {
-          store.replaceState(merge(store.state, savedState || {}, this.mergeOption) as S)
+          store.replaceState(merge<S, S>(store.state, savedState || {}, this.mergeOption) as S)
         }
 
         this.subscriber(store)((mutation: MutationPayload, state: S) => {
           if (this.filter(mutation)) {
-            this.saveState(this.key, this.reducer(state), this.storage)
+            const clonedState = deepToRaw(this.reducer(state));
+            this.saveState(this.key, clonedState, this.storage)
           }
         })
 

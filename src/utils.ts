@@ -3,7 +3,7 @@ import { toRaw } from 'vue'
 
 export type MergeOptionType = 'replaceArrays' | 'concatArrays'
 
-function deepToRaw(value: any): any {
+export function deepToRaw(value: any): any {
   if (value === null || typeof value !== 'object') {
     return value;
   }
